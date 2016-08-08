@@ -278,7 +278,8 @@ final class ConfigDelayedMerge extends AbstractConfigValue implements Unmergeabl
     // static method also used by ConfigDelayedMergeObject.
     static void render(List<AbstractConfigValue> stack, StringBuilder sb, int indent, boolean atRoot, String atKey,
             ConfigRenderOptions options) {
-        boolean commentMerge = options.getComments();
+        boolean ignoreUnresolvedMerge = options.isIgnoreUnresolvePlaceholders();
+        boolean commentMerge = options.getComments() && !ignoreUnresolvedMerge;
         if (commentMerge) {
             sb.append("# unresolved merge of " + stack.size() + " values follows (\n");
             if (atKey == null) {
@@ -293,41 +294,15 @@ final class ConfigDelayedMerge extends AbstractConfigValue implements Unmergeabl
         reversed.addAll(stack);
         Collections.reverse(reversed);
 
-        int i = 0;
-        for (AbstractConfigValue v : reversed) {
-            if (commentMerge) {
-                indent(sb, indent, options);
-                if (atKey != null) {
-                    sb.append("#     unmerged value " + i + " for key "
-                            + ConfigImplUtil.renderJsonString(atKey) + " from ");
-                } else {
-                    sb.append("#     unmerged value " + i + " from ");
-                }
-                i += 1;
-                sb.append(v.origin().description());
-                sb.append("\n");
-
-                for (String comment : v.origin().comments()) {
-                    indent(sb, indent, options);
-                    sb.append("# ");
-                    sb.append(comment);
-                    sb.append("\n");
-                }
+        if(ignoreUnresolvedMerge)
+            renderValue(sb, indent, atRoot, atKey, options, commentMerge, 0, reversed.get(reversed.size() - 1));
+        else {
+            int i = 0;
+            for (AbstractConfigValue v : reversed) {
+                i = renderValue(sb, indent, atRoot, atKey, options, commentMerge, i, v);
             }
-            indent(sb, indent, options);
-
-            if (atKey != null) {
-                sb.append(ConfigImplUtil.renderJsonString(atKey));
-                if (options.getFormatted())
-                    sb.append(" : ");
-                else
-                    sb.append(":");
-            }
-            v.render(sb, indent, atRoot, options);
-            sb.append(",");
-            if (options.getFormatted())
-                sb.append('\n');
         }
+
         // chop comma or newline
         sb.setLength(sb.length() - 1);
         if (options.getFormatted()) {
@@ -338,5 +313,42 @@ final class ConfigDelayedMerge extends AbstractConfigValue implements Unmergeabl
             indent(sb, indent, options);
             sb.append("# ) end of unresolved merge\n");
         }
+    }
+
+    private static int renderValue(StringBuilder sb, int indent, boolean atRoot, String atKey,
+                                   ConfigRenderOptions options, boolean commentMerge, int i, AbstractConfigValue v) {
+        if (commentMerge) {
+            indent(sb, indent, options);
+            if (atKey != null) {
+                sb.append("#     unmerged value " + i + " for key "
+                        + ConfigImplUtil.renderJsonString(atKey) + " from ");
+            } else {
+                sb.append("#     unmerged value " + i + " from ");
+            }
+            i += 1;
+            sb.append(v.origin().description());
+            sb.append("\n");
+
+            for (String comment : v.origin().comments()) {
+                indent(sb, indent, options);
+                sb.append("# ");
+                sb.append(comment);
+                sb.append("\n");
+            }
+        }
+        indent(sb, indent, options);
+
+        if (atKey != null) {
+            sb.append(ConfigImplUtil.renderJsonString(atKey));
+            if (options.getFormatted())
+                sb.append(" : ");
+            else
+                sb.append(":");
+        }
+        v.render(sb, indent, atRoot, options);
+        sb.append(",");
+        if (options.getFormatted())
+            sb.append('\n');
+        return i;
     }
 }

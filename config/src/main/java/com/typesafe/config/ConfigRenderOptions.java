@@ -21,13 +21,15 @@ public final class ConfigRenderOptions {
     private final boolean comments;
     private final boolean formatted;
     private final boolean json;
+    private final boolean ignoreUnresolvedPlaceholders;
 
     private ConfigRenderOptions(boolean originComments, boolean comments, boolean formatted,
-            boolean json) {
+                                boolean json, boolean ignoreUnresolvedPlaceholders) {
         this.originComments = originComments;
         this.comments = comments;
         this.formatted = formatted;
         this.json = json;
+        this.ignoreUnresolvedPlaceholders = ignoreUnresolvedPlaceholders;
     }
 
     /**
@@ -38,7 +40,7 @@ public final class ConfigRenderOptions {
      * @return the default render options
      */
     public static ConfigRenderOptions defaults() {
-        return new ConfigRenderOptions(true, true, true, true);
+        return new ConfigRenderOptions(true, true, true, true, false);
     }
 
     /**
@@ -48,7 +50,7 @@ public final class ConfigRenderOptions {
      * @return the concise render options
      */
     public static ConfigRenderOptions concise() {
-        return new ConfigRenderOptions(false, false, false, true);
+        return new ConfigRenderOptions(false, false, false, true, false);
     }
 
     /**
@@ -64,7 +66,7 @@ public final class ConfigRenderOptions {
         if (value == comments)
             return this;
         else
-            return new ConfigRenderOptions(originComments, value, formatted, json);
+            return new ConfigRenderOptions(originComments, value, formatted, json, ignoreUnresolvedPlaceholders);
     }
 
     /**
@@ -97,7 +99,7 @@ public final class ConfigRenderOptions {
         if (value == originComments)
             return this;
         else
-            return new ConfigRenderOptions(value, comments, formatted, json);
+            return new ConfigRenderOptions(value, comments, formatted, json, ignoreUnresolvedPlaceholders);
     }
 
     /**
@@ -122,7 +124,7 @@ public final class ConfigRenderOptions {
         if (value == formatted)
             return this;
         else
-            return new ConfigRenderOptions(originComments, comments, value, json);
+            return new ConfigRenderOptions(originComments, comments, value, json, ignoreUnresolvedPlaceholders);
     }
 
     /**
@@ -150,7 +152,7 @@ public final class ConfigRenderOptions {
         if (value == json)
             return this;
         else
-            return new ConfigRenderOptions(originComments, comments, formatted, value);
+            return new ConfigRenderOptions(originComments, comments, formatted, value, ignoreUnresolvedPlaceholders);
     }
 
     /**
@@ -161,6 +163,28 @@ public final class ConfigRenderOptions {
      */
     public boolean getJson() {
         return json;
+    }
+
+    /**
+     * Set how to handle the unresolved placeholders during rendering.
+     * If set to true, placeholders will be considered and rendered as simple values.
+     *
+     * @param ignoreUnresolvedPlaceholders
+     * @return options with the ignoreUnresolvedPlaceholders set
+     */
+    public ConfigRenderOptions setIgnoreUnresolvePlaceholders(boolean ignoreUnresolvedPlaceholders) {
+        if (this.ignoreUnresolvedPlaceholders == ignoreUnresolvedPlaceholders)
+            return this;
+        else
+            return new ConfigRenderOptions(originComments, comments, formatted, json, ignoreUnresolvedPlaceholders);
+    }
+
+    /**
+     * Gets the current ignoreUnresolvedPlaceholders option.
+     * @return the current ignoreUnresolvedPlaceholders or null
+     */
+    public boolean isIgnoreUnresolvePlaceholders() {
+        return ignoreUnresolvedPlaceholders;
     }
 
     @Override
@@ -174,6 +198,8 @@ public final class ConfigRenderOptions {
             sb.append("formatted,");
         if (json)
             sb.append("json,");
+        if (ignoreUnresolvedPlaceholders)
+            sb.append("ignoreUnresolvedPlaceholders,");
         if (sb.charAt(sb.length() - 1) == ',')
             sb.setLength(sb.length() - 1);
         sb.append(")");
